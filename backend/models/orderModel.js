@@ -8,3 +8,5 @@ const orderSchema = new Schema({
     type:mongoose.Schema.ObjectId,ref:"User"
   }]
 });
+orderSchema.index({name:"text"})
+module.exports= mongoose.model("Order",orderSchema)
