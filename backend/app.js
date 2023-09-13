@@ -9,7 +9,7 @@ process.on("uncaughtException", (err) => {
   console.log(`Error: ${err.message}`);
   console.log(`shutting down the server for handling uncaught exception`);
 });
-
+connectDatabase()
 // config
 if (process.env.NODE_ENV !== "PRODUCTION") {
   require("dotenv").config({
