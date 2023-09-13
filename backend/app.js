@@ -1,41 +1,31 @@
-const express = require('express')
+const express = require("express");
+const ErrorHandler = require("./middleware/error");
 const app = express();
-const connectDatabase = require("./db/db.js");
+const cookieParser = require("cookie-parser");
+const bodyParser = require("body-parser");
+const cors= require("cors")
+
+app.use(express.json());
+app.use(cookieParser());
+app.use(cors({
+  origin:"http://localhost:3000",
+  credentials:true
+}));
 
 
-
-// Handling uncaught Exception
-process.on("uncaughtException", (err) => {
-  console.log(`Error: ${err.message}`);
-  console.log(`shutting down the server for handling uncaught exception`);
-});
-connectDatabase()
-// config
+//config
 if (process.env.NODE_ENV !== "PRODUCTION") {
   require("dotenv").config({
     path: "config/.env",
   });
 }
+// import routes
+const user = require("./routes/userRoutes");
+ 
 
+app.use("/api/user", user);
 
-// connect db
-connectDatabase();
+// it's for ErrorHandling
+app.use(ErrorHandler);
 
-
-// create server
-const server = app.listen(process.env.PORT, () => {
-  console.log(
-    `Server is running on http://localhost:${process.env.PORT}`
-  );
-});
-
-
-// unhandled promise rejection
-process.on("unhandledRejection", (err) => {
-  console.log(`Shutting down the server for ${err.message}`);
-  console.log(`shutting down the server for unhandle promise rejection`);
-
-  server.close(() => {
-    process.exit(1);
-  });
-});
+module.exports = app;
