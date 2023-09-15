@@ -78,11 +78,25 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new Error("Invalid credentials");
   }
 });
+
 //setting up user profile
 const profile = asyncHandler(async (req, res) => {
   const { age, phone } = req.body;
   res.send("profile")
 });
+
+
+//fetch  all users
+const fetchallUsers = asyncHandler(async (req, res) => {
+  User.find()
+  .then((result)=>{
+      res.status(200).json(result);
+  })
+  .catch((error)=>{
+      res.status(500).json(error)    
+})
+});
+
 // Generate JWT
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET_KEY, {
@@ -95,3 +109,4 @@ module.exports = {
   loginUser,
   profile,
 };
+
