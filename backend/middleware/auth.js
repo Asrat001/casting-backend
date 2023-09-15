@@ -1,14 +1,14 @@
-const ErrorHandler = require("../utils/ErrorHandler");
+
 const catchAsyncErrors = require("./catchAsyncErrors");
 const jwt = require("jsonwebtoken");
-const User = require("../model/user");
-//const Shop = require("../model/shop");
+const User = require("../models/user");
 
-exports.isAuthenticated = catchAsyncErrors(async(req,res,next) => {
-    const {token} = req.cookies;
+
+const isAuthenticated = catchAsyncErrors(async(req,res,next) => {
+    const token = req.cookies["access_token"];
 
     if(!token){
-        return next(new ErrorHandler("Please login to continue", 401));
+        res.status(400).json({error:"Invalid token"});
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
@@ -18,7 +18,7 @@ exports.isAuthenticated = catchAsyncErrors(async(req,res,next) => {
     next();
 });
 
-
+module.exports={isAuthenticated};
 
 
 
