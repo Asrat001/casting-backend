@@ -72,5 +72,5 @@ userSchema.methods.toAdmin = function(){
     }
 }
 
-userSchema.index({name:"text"})
+
 module.exports= mongoose.model("User",userSchema)

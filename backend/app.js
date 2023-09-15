@@ -1,7 +1,8 @@
 const express = require("express");
-const ErrorHandler = require("./middleware/error");
 const app = express();
 const cookieParser = require("cookie-parser");
+const user = require("./routes/userRoutes");
+const order = require("./routes/orderRoutes")
 const bodyParser = require("body-parser");
 const cors= require("cors")
 
@@ -20,12 +21,18 @@ if (process.env.NODE_ENV !== "PRODUCTION") {
   });
 }
 // import routes
-const user = require("./routes/userRoutes");
+
  
+app.get('/', (req, res) => {
+  res.send('hello world')
+})
+
 
 app.use("/api/user", user);
+app.use("/api",order);
+
 
 // it's for ErrorHandling
-app.use(ErrorHandler);
+
 
 module.exports = app;
