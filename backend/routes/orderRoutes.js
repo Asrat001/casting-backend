@@ -1,7 +1,8 @@
 const express = require('express')
 const router=express.Router()
-const {orderBy} = require("../controllers/order")
+const {orderBy,getallOrder} = require("../controllers/order")
 
-router.post("/order",orderBy)
+router.post("/setorder",orderBy)
+router.get("/getallorder",getallOrder)
 
 module.exports = router

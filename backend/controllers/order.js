@@ -28,4 +28,17 @@ const orderBy = asyncHandler( async (req, res) =>{
 
     })
 
-module.exports={orderBy}    
+    //get all order only for admin
+   const getallOrder =asyncHandler(async(req,res)=>{
+    try {
+      const orders= await order.find().populate("users.userId").exec()
+      if (orders){
+        res.status(201).json(orders)
+      }
+    } catch (error) {
+      res.status(400).json(error)
+    }
+ 
+   })
+
+module.exports={orderBy,getallOrder}    

@@ -29,7 +29,7 @@ app.get('/', (req, res) => {
 
 
 app.use("/api/user", user);
-app.use("/api",order);
+app.use("/api/order",order);
 
 
 // it's for ErrorHandling
