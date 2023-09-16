@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const {isAuthenticated} = require("../middleware/auth")
+const {isAuthenticated, isAdminMiddleware} = require("../middleware/auth")
 const {
 
  
@@ -16,6 +16,6 @@ const {
 router.post('/signup', registerUser)
 router.post('/login', loginUser)
 router.post('/profile',isAuthenticated,profile)
-router.get("/alluser", fetchallUsers);
+router.get("/alluser",isAdminMiddleware, fetchallUsers);
 
 module.exports = router
