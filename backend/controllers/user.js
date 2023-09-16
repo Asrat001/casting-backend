@@ -108,5 +108,6 @@ module.exports = {
   registerUser,
   loginUser,
   profile,
+  fetchallUsers
 };
 

@@ -7,6 +7,7 @@ const {
   registerUser, 
   loginUser,
   fetchallUsers,
+  profile
 
 
 } = require('../controllers/user')
@@ -14,7 +15,6 @@ const {
 
 router.post('/signup', registerUser)
 router.post('/login', loginUser)
-
 router.post('/profile',isAuthenticated,profile)
 router.get("/alluser", fetchallUsers);
 
