@@ -6,6 +6,7 @@ const express = require("express");
 const router = express.Router();
 const ErrorHandler = require("../utils/ErrorHandler");
 const asyncHandler = require("express-async-handler");
+const user = require("../models/user");
 // @desc    Register new user
 // @route   POST /api/users
 // @access  Public
@@ -38,10 +39,10 @@ const registerUser = asyncHandler(async (req, res) => {
   });
 
   if (user) {
-    res.status(201).json({
+    res.cookie('access_token', generateToken(user.id),{maxAge:60*60*24*30*1000}).json({
       _id: user.id,
-      name: user.fullname,
       email: user.email,
+      fullname: user.fullname,
       token: generateToken(user._id),
     });
   } else {
@@ -81,7 +82,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
 //setting up user profile
 const profile = asyncHandler(async (req, res) => {
-  const { age, phone } = req.body;
+ 
   res.send("profile")
 });
 
