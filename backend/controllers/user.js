@@ -67,34 +67,114 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 
   if (user && (await bcrypt.compare(password, user.password))) {
-    res.cookie('access_token', generateToken(user.id),{maxAge:60*60*24*30*1000}).json({
-      _id: user.id,
-      email: user.email,
-      fullname: user.fullname,
-      token: generateToken(user._id),
-    });
+    res
+      .cookie("access_token", generateToken(user.id), {
+        maxAge: 60 * 60 * 24 * 30 * 1000,
+      })
+      .json({
+        _id: user.id,
+        email: user.email,
+        fullname: user.fullname,
+        token: generateToken(user._id),
+      });
   } else {
     res.status(400);
     throw new Error("Invalid credentials");
   }
 });
 
-//setting up user profile
-const profile = asyncHandler(async (req, res) => {
-  const { age, phone } = req.body;
-  res.send("profile")
+//Update end user profile
+const updateprofile = asyncHandler(async (req, res) => {
+  const profile = await User.findById(req.params.id);
+
+  if (!profile) {
+    res.status(400);
+    throw new Error("user profile not found");
+  }
+
+  const updatedprofile = await User.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+  });
+
+  res.status(200).json(updatedprofile);
 });
 
+//get cast by skin color  catagory
+
+const skincolor = asyncHandler(async (req, res) => {
+  try {
+    const casts = await User.find()
+      .where("skintone")
+      .equals(req.query.skintone);
+
+    res.status(200).json({
+      status: "success",
+      length: casts.length,
+      data: {
+        casts,
+      },
+    });
+  } catch (err) {
+    res.status(404).json({
+      status: "fail",
+      message: err.message,
+    });
+  }
+});
+
+//get cast by age   catagory
+
+const filterwithage = asyncHandler(async (req, res) => {
+  try {
+    const casts = await User.find().where("age").equals(req.query.age);
+    res.status(200).json({
+      status: "success",
+      length: casts.length,
+      data: {
+        casts,
+      },
+    });
+  } catch (err) {
+    res.status(404).json({
+      status: "fail",
+      message: err.message,
+    });
+  }
+});
+
+//get cast by both skin color and age   catagory
+
+const castbyageandskincolor = asyncHandler(async (req, res) => {
+  try {
+    const casts = await User.find()
+      .where("skintone")
+      .equals(req.query.skintone)
+      .where("age")
+      .equals(req.query.age);
+    res.status(200).json({
+      status: "success",
+      length: casts.length,
+      data: {
+        casts,
+      },
+    });
+  } catch (err) {
+    res.status(404).json({
+      status: "fail",
+      message: err.message,
+    });
+  }
+});
 
 //fetch  all users
 const fetchallUsers = asyncHandler(async (req, res) => {
   User.find()
-  .then((result)=>{
+    .then((result) => {
       res.status(200).json(result);
-  })
-  .catch((error)=>{
-      res.status(500).json(error)    
-})
+    })
+    .catch((error) => {
+      res.status(500).json(error);
+    });
 });
 
 // Generate JWT
@@ -107,7 +187,10 @@ const generateToken = (id) => {
 module.exports = {
   registerUser,
   loginUser,
-  profile,
-  fetchallUsers
-};
+  updateprofile,
+  fetchallUsers,
 
+  skincolor,
+  filterwithage,
+  castbyageandskincolor,
+};
