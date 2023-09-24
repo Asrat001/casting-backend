@@ -16,14 +16,8 @@ router.put("/profile/:id", updateprofile);
 router.post("/signup", registerUser);
 router.post("/login", loginUser);
 router.post("/profile", isAuthenticated, updateprofile);
-router.get("/alluser", isAdminMiddleware, fetchallUsers);
+router.get("/alluser", fetchallUsers);
 
-// filter routes
 
-router.get("/filter/skin", skincolor);
-
-router.get("/filter/age", filterwithage);
-
-router.get("/filter", castbyageandskincolor);
 
 module.exports = router;
