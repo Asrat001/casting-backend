@@ -1,21 +1,23 @@
-const express = require('express')
-const router = express.Router()
-const {isAuthenticated, isAdminMiddleware} = require("../middleware/auth")
+const express = require("express");
+const router = express.Router();
+const { isAuthenticated, isAdminMiddleware } = require("../middleware/auth");
 const {
-
- 
-  registerUser, 
+  registerUser,
   loginUser,
   fetchallUsers,
-  profile
+  updateprofile,
+  castbyageandskincolor,
+
+  skincolor,
+  filterwithage,
+} = require("../controllers/user");
+
+router.put("/profile/:id", updateprofile);
+router.post("/signup", registerUser);
+router.post("/login", loginUser);
+router.post("/profile", isAuthenticated, updateprofile);
+router.get("/alluser", fetchallUsers);
 
 
-} = require('../controllers/user')
 
-
-router.post('/signup', registerUser)
-router.post('/login', loginUser)
-router.post('/profile',isAuthenticated,profile)
-router.get("/alluser",isAdminMiddleware, fetchallUsers);
-
-module.exports = router
+module.exports = router;

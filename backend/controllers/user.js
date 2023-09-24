@@ -6,7 +6,9 @@ const express = require("express");
 const router = express.Router();
 const ErrorHandler = require("../utils/ErrorHandler");
 const asyncHandler = require("express-async-handler");
-const user = require("../models/user");
+
+
+
 // @desc    Register new user
 // @route   POST /api/users
 // @access  Public
@@ -68,47 +70,100 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 
   if (user && (await bcrypt.compare(password, user.password))) {
-    res.cookie('access_token', generateToken(user.id),{maxAge:60*60*24*30*1000}).json({
-      _id: user.id,
-      email: user.email,
-      fullname: user.fullname,
-      token: generateToken(user._id),
-    });
+    res
+      .cookie("access_token", generateToken(user.id), {
+        maxAge: 60 * 60 * 24 * 30 * 1000,
+      })
+      .json({
+        _id: user.id,
+        email: user.email,
+        fullname: user.fullname,
+        token: generateToken(user._id),
+      });
   } else {
     res.status(400);
     throw new Error("Invalid credentials");
   }
 });
 
-//setting up user profile
-const profile = asyncHandler(async (req, res) => {
- 
-  res.send("profile")
+
+
+//Update end user profile
+const updateprofile = asyncHandler(async (req, res) => {
+  const token = req.cookies["access_token"];
+  const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+
+  if (!decoded.id) {
+    res.status(400);
+    throw new Error("user profile not found");
+  }
+
+  const updatedprofile = await User.findByIdAndUpdate(decoded.id, req.body, {
+    new: true,
+  });
+
+  res.status(200).json(updatedprofile);
+
+
 });
+
+//get cast by skin color  catagory
 
 
 //fetch  all users
 const fetchallUsers = asyncHandler(async (req, res) => {
-  User.find()
-  .then((result)=>{
-      res.status(200).json(result);
-  })
-  .catch((error)=>{
-      res.status(500).json(error)    
-})
+            try{
+              const info = req.query.search
+              const limit = parseInt( req.query.limit)
+              const page = parseInt(req.query.page)-1||0          
+              const sex =  req.query.sex ||""   
+              const minAge= parseInt( req.query.minAge)           
+              const maxAge =parseInt(req.query.maxAge)
+                             
+       const query ={}
+       let Users
+        if(info){
+          query.expriance={$in:[info]}
+        }
+       if(minAge&&maxAge){
+        query.age={$gte:minAge,$lte:maxAge}
+       }
+       if(sex){
+        query.gender=sex
+       }
+    console.log(query)
+        Users =  await User.find(query,{email:0,password:0}).skip(page*limit).limit(limit)
+        const total= await User.countDocuments(query) 
+        const response ={
+        error:false,
+        total:total,
+        page:page+1,
+        limit:limit,
+        users: Users
+        }
+      
+         if(Users){
+          res.json(response )
+         }
+        
+       
+        
+            }catch(err){
+              res.status(500).json(err)
+            }
+
 });
 
 // Generate JWT
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET_KEY, {
-    expiresIn: "3d",
+    expiresIn: "10d",
   });
 };
 
 module.exports = {
   registerUser,
   loginUser,
-  profile,
-  fetchallUsers
+  updateprofile,
+  fetchallUsers,
 };
-
