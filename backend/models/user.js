@@ -13,6 +13,7 @@ const userSchema = new Schema(
             unique:true,
             required:true,
         },
+        gender:{type:String},
         password:{
             type:String,   
             required:true, 
@@ -33,8 +34,9 @@ const userSchema = new Schema(
           },
           nationality:{type:String},
           accadamic:{type:String},
-          expriance:[String]
+         
         },
+        expriance:[String],
         talent:{
             type:[String],
             enum:["Swimming ","Car Driving ","Motor"," Cycling","Cycling", " Heavy Car Driving","  Sket Boarding",
@@ -47,23 +49,22 @@ const userSchema = new Schema(
         isEmailVarified:{type:Boolean,default:false}
     }
 );
-userSchema.methods.toPtofileJSON = function(){
+
+userSchema.methods.getUser = function(){
     return{
         id:this._id,
         fullname:this.fullname,
         age:this.age,
-        email:this.email,
-        password:this.password,
-        isEmailVarified:this.isEmailVarified,
         avatar:this.avatar,
         pictures:this.pictures,
         skintone:this.skintone,
         language:this.language,
         phone:this.phone,
-
-
+        info:this.info,
+        talent:this.talent
     }
 }
+
 userSchema.methods.toAdmin = function(){
     return{
         id:this._id,
