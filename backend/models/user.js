@@ -47,6 +47,10 @@ const userSchema = new Schema(
         isActive:{type:Boolean,default:true},
         isAdmin:{type:Boolean,default:false},
         isEmailVarified:{type:Boolean,default:false}
+   
+    },
+    {
+        timestamps:true
     }
 );
 

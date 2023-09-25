@@ -6,18 +6,16 @@ const {
   loginUser,
   fetchallUsers,
   updateprofile,
-  castbyageandskincolor,
+  logout,
+  countallusers
 
-  skincolor,
-  filterwithage,
 } = require("../controllers/user");
 
-router.put("/profile/:id", updateprofile);
+router.put("/profile/:id",isAuthenticated , updateprofile);
 router.post("/signup", registerUser);
 router.post("/login", loginUser);
-router.post("/profile", isAuthenticated, updateprofile);
 router.get("/alluser", fetchallUsers);
-
-
+router.post("/logout", logout);
+router.get('/countusers',isAdminMiddleware,countallusers )
 
 module.exports = router;

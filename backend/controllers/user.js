@@ -87,6 +87,24 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 
+// log out user
+const logout=asyncHandler (async(req, res, next) => {
+  try {
+    res.cookie("access_token", null, {
+      expires: new Date(Date.now()),
+      httpOnly: true,
+      sameSite: "none",
+      secure: true,
+    });
+    res.status(201).json({
+      success: true,
+      message: "Log out successful!",
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 500));
+  }
+}
+);
 
 //Update end user profile
 const updateprofile = asyncHandler(async (req, res) => {
@@ -154,6 +172,16 @@ const fetchallUsers = asyncHandler(async (req, res) => {
 
 });
 
+// for admin count all users
+const countallusers = asyncHandler(async (req, res) => {
+  const users=await  User.find().countDocuments()
+  res.status(200).json(users)
+  
+  });
+
+
+
+
 // Generate JWT
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET_KEY, {
@@ -166,4 +194,6 @@ module.exports = {
   loginUser,
   updateprofile,
   fetchallUsers,
+  logout,
+  countallusers,
 };

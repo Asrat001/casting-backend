@@ -41,4 +41,12 @@ const orderBy = asyncHandler( async (req, res) =>{
  
    })
 
-module.exports={orderBy,getallOrder}    
+
+   // for admin count all order
+const countallorders = asyncHandler(async (req, res) => {
+  const users=await  order.find().countDocuments()
+  res.status(200).json(users)
+  
+  });
+
+module.exports={orderBy,getallOrder,countallorders}    
