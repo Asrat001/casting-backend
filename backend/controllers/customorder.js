@@ -88,4 +88,16 @@ const countallcustomorders = asyncHandler(async (req, res) => {
     res.status(400).json(error)
   });
   })
-    module.exports={customorderBy,countpendingcustomorders,countallcustomorders,counttodaycustomorders}    
+
+
+
+  // for admin no of successful custom orders
+const countsuccessfulcustomorders = asyncHandler(async (req, res) => {
+  const users=await  Customeorder.find()
+  .or([{status:'successful'}])
+  .countDocuments()
+  
+  res.status(200).json(users)
+  
+  });
+    module.exports={customorderBy,countpendingcustomorders,countallcustomorders,counttodaycustomorders,countsuccessfulcustomorders}    
