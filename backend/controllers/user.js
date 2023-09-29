@@ -125,7 +125,59 @@ const updateprofile = asyncHandler(async (req, res) => {
 
 });
 
-//get cast by skin color  catagory
+// user detail
+
+
+const userdetail=asyncHandler(async (req, res, next) => {
+    try {
+      const userinfo = await User.find({ _id: req.params.id });
+
+      res.status(201).json({
+        success: true,
+      userinfo,
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error, 400));
+    }
+  })
+//change password
+
+
+  const changepassword=asyncHandler(async (req, res, next) => {
+   
+      try {
+        const { id } = req.params;
+        const { oldPassword, newPassword } = req.body;
+    
+        // Find the user by ID
+        const user = await User.findById(id);
+    
+        // Check if the user exists
+        if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+    
+        // Check if the old password matches
+        const isMatch = await bcrypt.compare(oldPassword, user.password);
+        if (!isMatch) {
+          return res.status(401).json({ message: 'Invalid old password' });
+        }
+    
+        // Hash the new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+        // Update the password
+        user.password = hashedPassword;
+        await user.save();
+    
+        // Return success message
+        res.json({ message: 'Password changed successfully' });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+      }
+    })
+
 
 
 //fetch  all users
@@ -196,4 +248,6 @@ module.exports = {
   fetchallUsers,
   logout,
   countallusers,
+  userdetail,
+  changepassword
 };

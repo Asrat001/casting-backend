@@ -7,15 +7,20 @@ const {
   fetchallUsers,
   updateprofile,
   logout,
-  countallusers
+  countallusers,
+  userdetail,
+  changepassword
+
 
 } = require("../controllers/user");
 
-router.put("/profile/:id",isAuthenticated , updateprofile);
+router.put("/profile",isAuthenticated , updateprofile);
 router.post("/signup", registerUser);
 router.post("/login", loginUser);
 router.get("/alluser", fetchallUsers);
 router.post("/logout", logout);
 router.get('/countusers',isAdminMiddleware,countallusers )
+router.get("/detail/:id", userdetail);
+router.put("/changepassword/:id",isAuthenticated, changepassword);
 
 module.exports = router;

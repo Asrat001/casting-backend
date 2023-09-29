@@ -38,6 +38,48 @@ const customorderBy = asyncHandler( async (req, res) =>{
 
     })
 
+
+
+    //fetch  all custom orders
+const fetchallcustomorders = asyncHandler(async (req, res) => {
+  try{
+    const info = req.query.search
+    const limit = parseInt( req.query.limit)
+    const page = parseInt(req.query.page)-1||0          
+    const status =  req.query.status ||""
+                   
+const query ={}
+let Users
+if(info){
+query.fullname={$in:[info]}
+}
+if(status){
+  query.status=status
+ }
+
+console.log(query)
+Users =  await Customeorder.find(query,{email:0,password:0}).skip(page*limit).limit(limit)
+const total= await Customeorder.countDocuments(query) 
+const response ={
+error:false,
+total:total,
+page:page+1,
+limit:limit,
+users: Users
+}
+
+if(Users){
+res.json(response )
+}
+
+
+
+  }catch(err){
+    res.status(500).json(err)
+  }
+
+});
+
     // for admin no of pending customorders
 const countpendingcustomorders = asyncHandler(async (req, res) => {
   const users=await  Customeorder.find()
@@ -100,4 +142,4 @@ const countsuccessfulcustomorders = asyncHandler(async (req, res) => {
   res.status(200).json(users)
   
   });
-    module.exports={customorderBy,countpendingcustomorders,countallcustomorders,counttodaycustomorders,countsuccessfulcustomorders}    
+    module.exports={customorderBy,countpendingcustomorders,countallcustomorders,counttodaycustomorders,countsuccessfulcustomorders,fetchallcustomorders}    
