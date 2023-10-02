@@ -9,7 +9,8 @@ const {
   logout,
   countallusers,
   userdetail,
-  changepassword
+  changepassword,
+  verifyOTP
 
 
 } = require("../controllers/user");
@@ -22,5 +23,6 @@ router.post("/logout", logout);
 router.get('/countusers',isAdminMiddleware,countallusers )
 router.get("/detail/:id", userdetail);
 router.put("/changepassword/:id",isAuthenticated, changepassword);
+router.post("/verify", verifyOTP);
 
 module.exports = router;

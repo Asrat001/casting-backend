@@ -1,19 +1,19 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 const User = require("../models/user");
 const express = require("express");
-const router = express.Router();
 const ErrorHandler = require("../utils/ErrorHandler");
 const asyncHandler = require("express-async-handler");
-
-
-
+const config = require('../config/config');
+const nodemailer = require('nodemailer');
+const speakeasy = require('speakeasy');
 // @desc    Register new user
 // @route   POST /api/users
 // @access  Public
 
 const registerUser = asyncHandler(async (req, res) => {
+  try {
+  
   const { fullname, email, password } = req.body;
 
   if (!fullname || !email || !password) {
@@ -29,6 +29,12 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new Error("User already exists");
   }
 
+ // Generate a new OTP
+ const otp = speakeasy.totp({
+  secret: config.otpSecret,
+    digits: 6,
+});
+
   // Hash password
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
@@ -37,21 +43,56 @@ const registerUser = asyncHandler(async (req, res) => {
   const user = await User.create({
     fullname,
     email,
+    otp ,
     password: hashedPassword,
   });
+  // Send OTP to the user's email
+  const transporter = nodemailer.createTransport(config.email);
+  const mailOptions = {
+    from: config.email.sender,
+    to: email,
+    subject: 'OTP Verification',
+    text: `Your OTP is: ${otp}`,
+  };
+  await transporter.sendMail(mailOptions);
 
-  if (user) {
-    res.cookie('access_token', generateToken(user.id),{maxAge:60*60*24*30*1000}).json({
-      _id: user.id,
-      email: user.email,
-      fullname: user.fullname,
-      token: generateToken(user._id),
-    });
-  } else {
-    res.status(400);
-    throw new Error("Invalid user data");
-  }
+  res.status(200).json({ message: 'Registration successful. Please check your email for OTP verification.' });
+}catch (error) {
+  console.error(error);
+  res.status(500).json({ error: 'Internal server error' });
+}
+
 });
+
+
+// Activate user account
+const verifyOTP = async (req, res) => {
+  const { email, otp } = req.body;
+
+  try {
+    // Find the user by email
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if the OTP matches
+    if (user.otp === otp) {
+      // Mark the user as verified
+      user.isVerified = true;
+      await user.save();
+
+      return res.status(200).json({ message: 'Account activated successfully' });
+    } else {
+      return res.status(400).json({ error: 'Invalid OTP' });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 
 // @desc    Authenticate a user
 // @route   POST /api/users/login
@@ -249,5 +290,6 @@ module.exports = {
   logout,
   countallusers,
   userdetail,
-  changepassword
+  changepassword,
+  verifyOTP
 };
