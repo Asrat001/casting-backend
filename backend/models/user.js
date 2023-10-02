@@ -49,6 +49,8 @@ const userSchema = new Schema(
         otp: { type: String },
         forgotpasswordotp:{type: String },
      isVerified: { type: Boolean, default: false },
+     otpExpiration: Date,
+     forgototpExpiration: Date,
    
     },
     {

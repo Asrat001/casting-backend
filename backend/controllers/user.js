@@ -4,66 +4,75 @@ const User = require("../models/user");
 const express = require("express");
 const ErrorHandler = require("../utils/ErrorHandler");
 const asyncHandler = require("express-async-handler");
-const config = require('../config/config');
-const nodemailer = require('nodemailer');
-const speakeasy = require('speakeasy');
+const config = require("../config/config");
+const nodemailer = require("nodemailer");
+const speakeasy = require("speakeasy");
+const moment = require("moment");
 // @desc    Register new user
 // @route   POST /api/users
 // @access  Public
 
 const registerUser = asyncHandler(async (req, res) => {
   try {
-  
-  const { fullname, email, password } = req.body;
+    const { fullname, email, password } = req.body;
 
-  if (!fullname || !email || !password) {
-    res.status(400);
-    throw new Error("Please add all fields");
+    if (!fullname || !email || !password) {
+      res.status(400);
+      throw new Error("Please add all fields");
+    }
+
+    // Check if user exists
+    const userExists = await User.findOne({ email });
+
+    if (userExists) {
+      res.status(400);
+      throw new Error("User already exists");
+    }
+
+    // Generate a new OTP
+    const otp = speakeasy.totp({
+      secret: config.otpSecret,
+      digits: 6,
+    });
+    // Set OTP expiration to 10 minutes from now
+    const otpExpiration = moment().add(10, "minutes");
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create user
+    const user = await User.create({
+      fullname,
+      email,
+      otp,
+      password: hashedPassword,
+      otpExpiration,
+    });
+    // Send OTP to the user's email
+    const transporter = nodemailer.createTransport(config.email);
+    const mailOptions = {
+      from: config.email.sender,
+      to: email,
+      subject: "OTP Verification",
+      html: `
+    <h1>Email Verification</h1>
+    <p>Please use the following OTP to activate your account:</p>
+    <h2>${otp}</h2>
+  `,
+    };
+    await transporter.sendMail(mailOptions);
+
+    res
+      .status(200)
+      .json({
+        message:
+          "Registration successful. Please check your email for OTP verification.",
+      });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
   }
-
-  // Check if user exists
-  const userExists = await User.findOne({ email });
-
-  if (userExists) {
-    res.status(400);
-    throw new Error("User already exists");
-  }
-
- // Generate a new OTP
- const otp = speakeasy.totp({
-  secret: config.otpSecret,
-    digits: 6,
 });
-
-  // Hash password
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
-
-  // Create user
-  const user = await User.create({
-    fullname,
-    email,
-    otp ,
-    password: hashedPassword,
-  });
-  // Send OTP to the user's email
-  const transporter = nodemailer.createTransport(config.email);
-  const mailOptions = {
-    from: config.email.sender,
-    to: email,
-    subject: 'OTP Verification',
-    text: `Your OTP is: ${otp}`,
-  };
-  await transporter.sendMail(mailOptions);
-
-  res.status(200).json({ message: 'Registration successful. Please check your email for OTP verification.' });
-}catch (error) {
-  console.error(error);
-  res.status(500).json({ error: 'Internal server error' });
-}
-
-});
-
 
 // Activate user account
 const verifyOTP = async (req, res) => {
@@ -74,25 +83,32 @@ const verifyOTP = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: "User not found" });
+    }
+    // Check if the OTP has expired
+    if (moment().isAfter(user.otpExpiration)) {
+      return res.status(401).json({ message: "OTP has expired" });
     }
 
     // Check if the OTP matches
     if (user.otp === otp) {
       // Mark the user as verified
       user.isVerified = true;
+      user.otp = "";
+      user.otpExpiration = null;
       await user.save();
 
-      return res.status(200).json({ message: 'Account activated successfully' });
+      return res
+        .status(200)
+        .json({ message: "Account activated successfully" });
     } else {
-      return res.status(400).json({ error: 'Invalid OTP' });
+      return res.status(400).json({ error: "Invalid OTP" });
     }
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
-
 
 // @desc    Authenticate a user
 // @route   POST /api/users/login
@@ -127,9 +143,8 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 });
 
-
 // log out user
-const logout=asyncHandler (async(req, res, next) => {
+const logout = asyncHandler(async (req, res, next) => {
   try {
     res.cookie("access_token", null, {
       expires: new Date(Date.now()),
@@ -144,8 +159,7 @@ const logout=asyncHandler (async(req, res, next) => {
   } catch (error) {
     return next(new ErrorHandler(error.message, 500));
   }
-}
-);
+});
 
 //Update end user profile
 const updateprofile = asyncHandler(async (req, res) => {
@@ -162,63 +176,57 @@ const updateprofile = asyncHandler(async (req, res) => {
   });
 
   res.status(200).json(updatedprofile);
-
-
 });
 
 // user detail
 
+const userdetail = asyncHandler(async (req, res, next) => {
+  try {
+    const userinfo = await User.find({ _id: req.params.id });
 
-const userdetail=asyncHandler(async (req, res, next) => {
-    try {
-      const userinfo = await User.find({ _id: req.params.id });
-
-      res.status(201).json({
-        success: true,
+    res.status(201).json({
+      success: true,
       userinfo,
-      });
-    } catch (error) {
-      return next(new ErrorHandler(error, 400));
-    }
-  })
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error, 400));
+  }
+});
 //change password
 
+const changepassword = asyncHandler(async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { oldPassword, newPassword } = req.body;
 
-  const changepassword=asyncHandler(async (req, res, next) => {
-   
-      try {
-        const { id } = req.params;
-        const { oldPassword, newPassword } = req.body;
-    
-        // Find the user by ID
-        const user = await User.findById(id);
-    
-        // Check if the user exists
-        if (!user) {
-          return res.status(404).json({ message: 'User not found' });
-        }
-    
-        // Check if the old password matches
-        const isMatch = await bcrypt.compare(oldPassword, user.password);
-        if (!isMatch) {
-          return res.status(401).json({ message: 'Invalid old password' });
-        }
-    
-        // Hash the new password
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-    
-        // Update the password
-        user.password = hashedPassword;
-        await user.save();
-    
-        // Return success message
-        res.json({ message: 'Password changed successfully' });
-      } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Internal server error' });
-      }
-    })
+    // Find the user by ID
+    const user = await User.findById(id);
 
+    // Check if the user exists
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if the old password matches
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid old password" });
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update the password
+    user.password = hashedPassword;
+    await user.save();
+
+    // Return success message
+    res.json({ message: "Password changed successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
 
 // Forgot Password - Send OTP
 const forgotpassword = async (req, res) => {
@@ -229,7 +237,7 @@ const forgotpassword = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: "User not found" });
     }
 
     // Generate OTP
@@ -237,9 +245,10 @@ const forgotpassword = async (req, res) => {
       secret: config.otpSecret,
       digits: 6,
     });
-
+    const forgototpExpiration = moment().add(10, "minutes");
     // Save OTP to user document
     user.forgotpasswordotp = otp;
+    user.forgototpExpiration = forgototpExpiration;
     await user.save();
 
     // Send OTP to user's email
@@ -247,21 +256,21 @@ const forgotpassword = async (req, res) => {
     const mailOptions = {
       from: config.email.auth.user,
       to: email,
-      subject: 'Forgot Password - OTP Verification',
+      subject: "Forgot Password - OTP Verification",
       text: `Your OTP for password reset is: ${otp}`,
     };
 
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
         console.error(error);
-        return res.status(500).json({ error: 'Failed to send OTP' });
+        return res.status(500).json({ error: "Failed to send OTP" });
       } else {
-        return res.status(200).json({ message: 'OTP sent successfully' });
+        return res.status(200).json({ message: "OTP sent successfully" });
       }
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
 
@@ -274,82 +283,82 @@ const resetPassword = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Check if the OTP has expired
+    if (moment().isAfter(user.forgototpExpiration)) {
+      return res.status(401).json({ message: "OTP has expired" });
     }
 
     // Check if the OTP matches
     if (user.forgotpasswordotp === forgotpasswordotp) {
       // Update the password
-       // Hash password
-  const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newpassword, salt);
+      // Hash password
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(newpassword, salt);
       user.password = hashedPassword;
+      user.forgotpasswordotp = "";
+      user.forgototpExpiration = null;
       await user.save();
 
-      return res.status(200).json({ message: 'Password reset successful' });
+      return res.status(200).json({ message: "Password reset successful" });
     } else {
-      return res.status(400).json({ error: 'Invalid OTP' });
+      return res.status(400).json({ error: "Invalid OTP" });
     }
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
 
-
 //fetch  all users
 const fetchallUsers = asyncHandler(async (req, res) => {
-            try{
-              const info = req.query.search
-              const limit = parseInt( req.query.limit)
-              const page = parseInt(req.query.page)-1||0          
-              const sex =  req.query.sex ||""   
-              const minAge= parseInt( req.query.minAge)           
-              const maxAge =parseInt(req.query.maxAge)
-                             
-       const query ={}
-       let Users
-        if(info){
-          query.expriance={$in:[info]}
-        }
-       if(minAge&&maxAge){
-        query.age={$gte:minAge,$lte:maxAge}
-       }
-       if(sex){
-        query.gender=sex
-       }
-    console.log(query)
-        Users =  await User.find(query,{email:0,password:0}).skip(page*limit).limit(limit)
-        const total= await User.countDocuments(query) 
-        const response ={
-        error:false,
-        total:total,
-        page:page+1,
-        limit:limit,
-        users: Users
-        }
-      
-         if(Users){
-          res.json(response )
-         }
-        
-       
-        
-            }catch(err){
-              res.status(500).json(err)
-            }
+  try {
+    const info = req.query.search;
+    const limit = parseInt(req.query.limit);
+    const page = parseInt(req.query.page) - 1 || 0;
+    const sex = req.query.sex || "";
+    const minAge = parseInt(req.query.minAge);
+    const maxAge = parseInt(req.query.maxAge);
 
+    const query = {};
+    let Users;
+    if (info) {
+      query.expriance = { $in: [info] };
+    }
+    if (minAge && maxAge) {
+      query.age = { $gte: minAge, $lte: maxAge };
+    }
+    if (sex) {
+      query.gender = sex;
+    }
+    console.log(query);
+    Users = await User.find(query, { email: 0, password: 0 })
+      .skip(page * limit)
+      .limit(limit);
+    const total = await User.countDocuments(query);
+    const response = {
+      error: false,
+      total: total,
+      page: page + 1,
+      limit: limit,
+      users: Users,
+    };
+
+    if (Users) {
+      res.json(response);
+    }
+  } catch (err) {
+    res.status(500).json(err);
+  }
 });
 
 // for admin count all users
 const countallusers = asyncHandler(async (req, res) => {
-  const users=await  User.find().countDocuments()
-  res.status(200).json(users)
-  
-  });
-
-
-
+  const users = await User.find().countDocuments();
+  res.status(200).json(users);
+});
 
 // Generate JWT
 const generateToken = (id) => {
@@ -369,5 +378,5 @@ module.exports = {
   changepassword,
   verifyOTP,
   resetPassword,
-  forgotpassword
+  forgotpassword,
 };
