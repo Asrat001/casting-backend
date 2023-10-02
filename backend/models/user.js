@@ -47,6 +47,7 @@ const userSchema = new Schema(
         isActive:{type:Boolean,default:true},
         isAdmin:{type:Boolean,default:false},
         otp: { type: String },
+        forgotpasswordotp:{type: String },
      isVerified: { type: Boolean, default: false },
    
     },

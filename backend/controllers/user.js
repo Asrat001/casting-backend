@@ -220,6 +220,82 @@ const userdetail=asyncHandler(async (req, res, next) => {
     })
 
 
+// Forgot Password - Send OTP
+const forgotpassword = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    // Find the user by email
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Generate OTP
+    const otp = speakeasy.totp({
+      secret: config.otpSecret,
+      digits: 6,
+    });
+
+    // Save OTP to user document
+    user.forgotpasswordotp = otp;
+    await user.save();
+
+    // Send OTP to user's email
+    const transporter = nodemailer.createTransport(config.email);
+    const mailOptions = {
+      from: config.email.auth.user,
+      to: email,
+      subject: 'Forgot Password - OTP Verification',
+      text: `Your OTP for password reset is: ${otp}`,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Failed to send OTP' });
+      } else {
+        return res.status(200).json({ message: 'OTP sent successfully' });
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Reset Password
+const resetPassword = async (req, res) => {
+  const { email, forgotpasswordotp, newpassword } = req.body;
+
+  try {
+    // Find the user by email
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if the OTP matches
+    if (user.forgotpasswordotp === forgotpasswordotp) {
+      // Update the password
+       // Hash password
+  const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newpassword, salt);
+      user.password = hashedPassword;
+      await user.save();
+
+      return res.status(200).json({ message: 'Password reset successful' });
+    } else {
+      return res.status(400).json({ error: 'Invalid OTP' });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 
 //fetch  all users
 const fetchallUsers = asyncHandler(async (req, res) => {
@@ -291,5 +367,7 @@ module.exports = {
   countallusers,
   userdetail,
   changepassword,
-  verifyOTP
+  verifyOTP,
+  resetPassword,
+  forgotpassword
 };
