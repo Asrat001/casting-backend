@@ -46,7 +46,15 @@ const userSchema = new Schema(
         },
         isActive:{type:Boolean,default:true},
         isAdmin:{type:Boolean,default:false},
-        isEmailVarified:{type:Boolean,default:false}
+        otp: { type: String },
+        forgotpasswordotp:{type: String },
+     isVerified: { type: Boolean, default: false },
+     otpExpiration: Date,
+     forgototpExpiration: Date,
+   
+    },
+    {
+        timestamps:true
     }
 );
 

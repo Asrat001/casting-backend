@@ -3,14 +3,16 @@ const app = express();
 const cookieParser = require("cookie-parser");
 const user = require("./routes/userRoutes");
 const order = require("./routes/orderRoutes")
+const customorder = require("./routes/customorderRoutes")
+
 const bodyParser = require("body-parser");
 const cors= require("cors")
 
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-  origin:"http://localhost:3000",
-  credentials:true
+  origin:"http://localhost:5173",
+    credentials:true
 }));
 
 
@@ -30,6 +32,8 @@ app.get('/', (req, res) => {
 
 app.use("/api/user", user);
 app.use("/api/order",order);
+app.use("/api/customorder", customorder);
+
 
 
 // it's for ErrorHandling
