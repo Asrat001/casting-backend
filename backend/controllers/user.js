@@ -329,7 +329,7 @@ const resetPassword = async (req, res) => {
 const fetchallUsers = asyncHandler(async (req, res) => {
   try {
     const info = req.query.search;
-    const limit = parseInt(req.query.limit);
+    const limit = parseInt(req.query.limit)||9;
     const page = parseInt(req.query.page) - 1 || 0;
     const sex = req.query.sex || "";
     const minAge = parseInt(req.query.minAge);

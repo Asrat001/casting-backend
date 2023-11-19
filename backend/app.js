@@ -3,6 +3,7 @@ const app = express();
 const cookieParser = require("cookie-parser");
 const user = require("./routes/userRoutes");
 const order = require("./routes/orderRoutes")
+const User = require('../backend/models/user')
 const customorder = require("./routes/customorderRoutes")
 
 const bodyParser = require("body-parser");
@@ -26,6 +27,7 @@ if (process.env.NODE_ENV !== "PRODUCTION") {
 
  
 app.get('/', (req, res) => {
+
   res.send('hello world')
 })
 
@@ -33,8 +35,24 @@ app.get('/', (req, res) => {
 app.use("/api/user", user);
 app.use("/api/order",order);
 app.use("/api/customorder", customorder);
+//user seed
 
 
+
+
+
+const seedUsers = async () => {
+  try {
+    await User.deleteMany(); // Clear existing users (optional)
+
+    const createdUsers = await User.create(Data);
+    console.log('Users seeded:', createdUsers);
+  } catch (err) {
+    console.error('Error seeding users:', err);
+  } finally {
+    process.exit(); // Terminate the script after seeding
+  }
+};
 
 // it's for ErrorHandling
 
