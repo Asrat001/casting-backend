@@ -13,6 +13,7 @@ const userSchema = new Schema(
             unique:true,
             required:true,
         },
+        about:{type:String},
         gender:{type:String},
         password:{
             type:String,   
@@ -21,7 +22,7 @@ const userSchema = new Schema(
         avatar:{
             type:String,
         },
-        pictures:[String],
+        links:[String],
         skintone:{type:String},
         language:[String],
         phone:{type:String},
@@ -39,10 +40,10 @@ const userSchema = new Schema(
         expriance:[String],
         talent:{
             type:[String],
-            enum:["Swimming ","Car Driving ","Motor"," Cycling","Cycling", " Heavy Car Driving","  Sket Boarding",
-             " Karate","  Tenise",  "Foot Ball","  Gym", " Runing ", " Modeling" ," Circus",  " Wood Working" ," Metal Working", 
-             " Vocal", " Drum" ," Lead Guitar", " Base Guitar ","Saxphone","  Trampet"," Violin","Cello" ," Fluet", " Keyboard" ,
-             " Piano"]
+            enum:["Swimming","Car Driving","Motor","Cycling","Cycling", "Heavy Car Driving","Sket Boarding",
+             "Karate","Tenise",  "Foot Ball","Gym", "Runing", "Modeling" ,"Circus",  "Wood Working" ,"Metal Working", 
+             "Vocal", " Drum" ," Lead Guitar", "Base Guitar ","Saxphone","Trampet","Violin","Cello" ," Fluet", "Keyboard" ,
+             "Piano"]
         },
         isActive:{type:Boolean,default:true},
         isAdmin:{type:Boolean,default:false},

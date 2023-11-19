@@ -62,12 +62,19 @@ const registerUser = asyncHandler(async (req, res) => {
     };
     await transporter.sendMail(mailOptions);
 
-    res
-      .status(200)
-      .json({
-        message:
-          "Registration successful. Please check your email for OTP verification.",
-      });
+    
+    res.cookie("access_token", generateToken(user.id), {
+      maxAge: 60 * 60 * 24 * 30 * 1000,
+     
+    } )
+    .json({
+      message:`you registed sucussfully , we have sent you otp to ${user.email}`,
+      _id: user.id,
+      email: user.email,
+      fullname: user.fullname,
+     
+    });
+    
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error" });
@@ -76,11 +83,14 @@ const registerUser = asyncHandler(async (req, res) => {
 
 // Activate user account
 const verifyOTP = async (req, res) => {
-  const { email, otp } = req.body;
+  const {otp } = req.body;
+  const token = req.cookies["access_token"];
+  const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+  
 
   try {
     // Find the user by email
-    const user = await User.findOne({ email });
+    const user = await User.findById(decoded.id);
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
@@ -130,7 +140,10 @@ const loginUser = asyncHandler(async (req, res) => {
     res
       .cookie("access_token", generateToken(user.id), {
         maxAge: 60 * 60 * 24 * 30 * 1000,
-      })
+        httpOnly:true,
+        secure:true
+
+      } )
       .json({
         _id: user.id,
         email: user.email,
@@ -316,7 +329,7 @@ const resetPassword = async (req, res) => {
 const fetchallUsers = asyncHandler(async (req, res) => {
   try {
     const info = req.query.search;
-    const limit = parseInt(req.query.limit);
+    const limit = parseInt(req.query.limit)||9;
     const page = parseInt(req.query.page) - 1 || 0;
     const sex = req.query.sex || "";
     const minAge = parseInt(req.query.minAge);
