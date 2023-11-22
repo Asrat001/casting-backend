@@ -12,7 +12,7 @@ const cors= require("cors")
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-  origin:"https://energycasting.netlify.app/",
+  origin:"https://energycasting.netlify.app",
     credentials:true
 }));
 
