@@ -76,7 +76,7 @@ const registerUser = asyncHandler(async (req, res) => {
     });
     
   } catch (error) {
-    console.error(error);
+    
     res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -115,7 +115,7 @@ const verifyOTP = async (req, res) => {
       return res.status(400).json({ error: "Invalid OTP" });
     }
   } catch (error) {
-    console.error(error);
+    
     return res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -320,7 +320,7 @@ const resetPassword = async (req, res) => {
       return res.status(400).json({ error: "Invalid OTP" });
     }
   } catch (error) {
-    console.error(error);
+    
     return res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -346,7 +346,7 @@ const fetchallUsers = asyncHandler(async (req, res) => {
     if (sex) {
       query.gender = sex;
     }
-    console.log(query);
+    
     Users = await User.find(query, { email: 0, password: 0 })
       .skip(page * limit)
       .limit(limit);
