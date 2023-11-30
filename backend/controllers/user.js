@@ -25,8 +25,8 @@ const registerUser = asyncHandler(async (req, res) => {
     const userExists = await User.findOne({ email });
 
     if (userExists) {
-      res.status(400);
-      throw new Error("User already exists");
+      res.status(400).json({message:true});
+      
     }
 
     // Generate a new OTP
@@ -83,8 +83,9 @@ const registerUser = asyncHandler(async (req, res) => {
 
 // Activate user account
 const verifyOTP = async (req, res) => {
-  const {otp } = req.body;
+  const {otp ,id } = req.body;
   const token = req.cookies["access_token"];
+  console.log(token)
   const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
   
 
@@ -110,7 +111,7 @@ const verifyOTP = async (req, res) => {
 
       return res
         .status(200)
-        .json({ message: "Account activated successfully" });
+        .json({ message: "Account activated successfully",flage: user.isVerified });
     } else {
       return res.status(400).json({ error: "Invalid OTP" });
     }

@@ -13,7 +13,8 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
   origin:["https://energycasting.netlify.app","http://localhost:5173"],
-    credentials:true
+    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept'],
+    credentials: true,
 }));
 
 
