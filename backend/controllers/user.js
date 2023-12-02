@@ -149,7 +149,6 @@ const loginUser = asyncHandler(async (req, res) => {
     res
       .cookie("access_token", generateToken(user.id), {
         maxAge: 60 * 60 * 24 * 30 * 1000,
-        httpOnly:true,
         secure:true
 
       } )
