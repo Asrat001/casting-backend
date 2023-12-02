@@ -348,7 +348,9 @@ const fetchallUsers = asyncHandler(async (req, res) => {
     const minAge = parseInt(req.query.minAge);
     const maxAge = parseInt(req.query.maxAge);
 
-    const query = {};
+    const query = {
+     isVerified:true
+    };
     let Users;
     if (info) {
       query.expriance = { $in: [info] };
@@ -360,7 +362,7 @@ const fetchallUsers = asyncHandler(async (req, res) => {
       query.gender = sex;
     }
     
-    Users = await User.find(query, { email: 0, password: 0 ,isVerified:true})
+    Users = await User.find(query).select('-password -email')
       .skip(page * limit)
       .limit(limit);
     const total = await User.countDocuments(query);
