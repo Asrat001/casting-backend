@@ -15,76 +15,81 @@ const moment = require("moment");
 const registerUser = asyncHandler(async (req, res) => {
   try {
     const { fullname, email, password } = req.body;
-
+     
     if (!fullname || !email || !password) {
       res.status(400);
       throw new Error("Please add all fields");
     }
-
+   
     // Check if user exists
     const userExists = await User.findOne({ email });
-
+   
     if (userExists) {
-      res.status(400);
-      throw new Error("User already exists");
+      
+      res.status(400).json({ error: 'User already exists' , userexist:true });
+    
+      
+    }else{
+      const otp = speakeasy.totp({
+        secret: config.otpSecret,
+        digits: 6,
+      });
+      // Set OTP expiration to 10 minutes from now
+      const otpExpiration = moment().add(10, "minutes");
+      // Hash password
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+      const registrationDate =Date.now()
+      // Create user
+      const user = await User.create({
+        fullname,
+        email,
+        otp,
+        password: hashedPassword,
+        otpExpiration,
+        registrationDate
+      });
+      // Send OTP to the user's email
+      const transporter = nodemailer.createTransport(config.email);
+      const mailOptions = {
+        from: config.email.sender,
+        to: email,
+        subject: "OTP Verification",
+        html: `
+      <h1>Email Verification</h1>
+      <p>Please use the following OTP to activate your account:</p>
+      <h2>${otp}</h2>
+    `,
+      };
+      await transporter.sendMail(mailOptions);
+  
+      
+      res.cookie("access_token", generateToken(user.id), {
+        maxAge: 60 * 60 * 24 * 30 * 1000,
+       
+      } )
+      .json({
+        message:`you registed sucussfully , we have sent you otp to ${user.email}`,
+        _id: user.id,
+        fullname: user.fullname,
+       
+      });
     }
 
     // Generate a new OTP
-    const otp = speakeasy.totp({
-      secret: config.otpSecret,
-      digits: 6,
-    });
-    // Set OTP expiration to 10 minutes from now
-    const otpExpiration = moment().add(10, "minutes");
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create user
-    const user = await User.create({
-      fullname,
-      email,
-      otp,
-      password: hashedPassword,
-      otpExpiration,
-    });
-    // Send OTP to the user's email
-    const transporter = nodemailer.createTransport(config.email);
-    const mailOptions = {
-      from: config.email.sender,
-      to: email,
-      subject: "OTP Verification",
-      html: `
-    <h1>Email Verification</h1>
-    <p>Please use the following OTP to activate your account:</p>
-    <h2>${otp}</h2>
-  `,
-    };
-    await transporter.sendMail(mailOptions);
-
-    
-    res.cookie("access_token", generateToken(user.id), {
-      maxAge: 60 * 60 * 24 * 30 * 1000,
-     
-    } )
-    .json({
-      message:`you registed sucussfully , we have sent you otp to ${user.email}`,
-      _id: user.id,
-      email: user.email,
-      fullname: user.fullname,
-     
-    });
     
   } catch (error) {
-    console.error(error);
+    
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
 // Activate user account
 const verifyOTP = async (req, res) => {
-  const {otp } = req.body;
+  const {otp ,id } = req.body;
   const token = req.cookies["access_token"];
+  console.log(token)
   const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
   
 
@@ -110,12 +115,12 @@ const verifyOTP = async (req, res) => {
 
       return res
         .status(200)
-        .json({ message: "Account activated successfully" });
+        .json({ message: "Account activated successfully",flage: user.isVerified });
     } else {
       return res.status(400).json({ error: "Invalid OTP" });
     }
   } catch (error) {
-    console.error(error);
+    
     return res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -126,17 +131,20 @@ const verifyOTP = async (req, res) => {
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
-    res.status(400);
-    throw new Error("Please add all fields");
+    res.status(400).json('Please add all fields');
+    
   }
+  
   // Check for user email
   const user = await User.findOne({ email }).select("+password");
-
+ const pass =await bcrypt.compare(password, user.password)
+ console.log(pass)
   if (!user) {
-    return next(new ErrorHandler("User doesn't exists!", 400));
+     res.status(404).json({error:'user doesnt exist'})
   }
 
   if (user && (await bcrypt.compare(password, user.password))) {
+    console.log(user)
     res
       .cookie("access_token", generateToken(user.id), {
         maxAge: 60 * 60 * 24 * 30 * 1000,
@@ -146,11 +154,11 @@ const loginUser = asyncHandler(async (req, res) => {
       } )
       .json({
         _id: user.id,
-        email: user.email,
         fullname: user.fullname,
-        token: generateToken(user._id),
+        isAdmin:user.isAdmin,
       });
-  } else {
+  }
+   else {
     res.status(400);
     throw new Error("Invalid credentials");
   }
@@ -176,9 +184,10 @@ const logout = asyncHandler(async (req, res, next) => {
 
 //Update end user profile
 const updateprofile = asyncHandler(async (req, res) => {
+try {
   const token = req.cookies["access_token"];
   const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-
+ console.log(req.body)
   if (!decoded.id) {
     res.status(400);
     throw new Error("user profile not found");
@@ -189,6 +198,10 @@ const updateprofile = asyncHandler(async (req, res) => {
   });
 
   res.status(200).json(updatedprofile);
+  
+} catch (error) {
+  res.status(400).json(error)
+}
 });
 
 // user detail
@@ -320,7 +333,7 @@ const resetPassword = async (req, res) => {
       return res.status(400).json({ error: "Invalid OTP" });
     }
   } catch (error) {
-    console.error(error);
+    
     return res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -346,7 +359,7 @@ const fetchallUsers = asyncHandler(async (req, res) => {
     if (sex) {
       query.gender = sex;
     }
-    console.log(query);
+    
     Users = await User.find(query, { email: 0, password: 0 })
       .skip(page * limit)
       .limit(limit);
@@ -369,8 +382,39 @@ const fetchallUsers = asyncHandler(async (req, res) => {
 
 // for admin count all users
 const countallusers = asyncHandler(async (req, res) => {
-  const users = await User.find().countDocuments();
-  res.status(200).json(users);
+try {
+  const allcast = await User.find().countDocuments()
+  const fm = await User.find({gender:'female'}).countDocuments()
+  const male = await User.find({gender:'male'}).countDocuments()
+  const monthlyRegisteredUsers = await User.aggregate([
+    {
+      $group: {
+        _id: {
+          year: { $year: '$registrationDate' },
+          month: { $month: '$registrationDate' }
+        },
+        count: { $sum: 1 }
+      }
+    },
+    {
+      $sort: {
+        '_id.year': 1,
+        '_id.month': 1
+      }
+    }
+  ]);
+   const response={
+    female :fm ,
+    male :male,
+    allcasts:allcast,
+    monthlyRegisteredUsers:monthlyRegisteredUsers
+   }
+  
+  res.status(200).json(response);
+  
+} catch (error) {
+  res.status(400).json({message:'invalid access token'})
+}
 });
 
 // Generate JWT
