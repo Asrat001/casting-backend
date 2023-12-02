@@ -360,7 +360,7 @@ const fetchallUsers = asyncHandler(async (req, res) => {
       query.gender = sex;
     }
     
-    Users = await User.find(query, { email: 0, password: 0 })
+    Users = await User.find(query, { email: 0, password: 0 ,isVerified:true})
       .skip(page * limit)
       .limit(limit);
     const total = await User.countDocuments(query);
