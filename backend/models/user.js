@@ -7,6 +7,10 @@ const userSchema = new Schema(
         fullname:{
             type: String,
         },
+        registrationDate: {
+            type: Date,
+            default: Date.now  // Set default value to the current date/time when a new user is created
+          },
         age:{ type: Number, default:0},
         email:{
             type:String,

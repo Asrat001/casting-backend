@@ -44,8 +44,13 @@ const orderBy = asyncHandler( async (req, res) =>{
 
    // for admin count all order
 const countallorders = asyncHandler(async (req, res) => {
-  const users=await  order.find().countDocuments()
-  res.status(200).json(users)
+  try {
+    const ordern=await  order.find().countDocuments()
+  res.status(200).json(ordern)
+    
+  } catch (error) {
+    res.status(400).json({message:'bad requiest'})
+  }
   
   });
 
