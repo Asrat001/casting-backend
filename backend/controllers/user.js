@@ -139,10 +139,11 @@ const loginUser = asyncHandler(async (req, res) => {
   }
   
   // Check for user email
-  const user = await User.findOne({ email }).select("+password");
-  console.log(user)
+  const user = await User.findOne({email}).select("+password");
+  console.log(password)
  
-  if (!user) {
+  if (user==null) {
+    console.log(password)
      res.status(404).json({error:'user doesnt exist'})
   }
 
@@ -165,13 +166,11 @@ const loginUser = asyncHandler(async (req, res) => {
         img:user.avatar
       });
 
-  }else{
-    res.status(400).json({message:"your password is incorect"})
   }
 
  } catch (error) {
-  res.status(400);
-  throw new Error("Invalid credentials");
+  res.status(400).json({error})
+
  }
  
 });
