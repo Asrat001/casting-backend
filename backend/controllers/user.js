@@ -158,6 +158,7 @@ const loginUser = asyncHandler(async (req, res) => {
         _id: user.id,
         fullname: user.fullname,
         isAdmin:user.isAdmin,
+        img:user.avatar
       });
   }
    else {
