@@ -149,11 +149,11 @@ const loginUser = asyncHandler(async (req, res) => {
   if (user && (await bcrypt.compare(password,user.password))) {
   
     
-    res
-      .cookie("access_token", generateToken(user._id), {
+    
+    res.cookie("access_token", generateToken(user._id), {
         maxAge: 60 * 60 * 24 * 30 * 1000,
-       // secure:true,
-        //sameSite:"none",
+       secure:true,
+       sameSite:"none",
         httpOnly: true
 
 
