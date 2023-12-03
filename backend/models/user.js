@@ -26,9 +26,9 @@ const userSchema = new Schema(
         avatar:{
             type:String,
         },
-        links:[String],
+        links:{type:String},
         skintone:{type:String},
-        language:[String],
+        language:{type:String},
         phone:{type:String},
         info:{
           region:{
@@ -41,7 +41,7 @@ const userSchema = new Schema(
           accadamic:{type:String},
          
         },
-        expriance:[String],
+        expriance:{type:String},
         talent:{
             type:[String],
             enum:["Swimming","Car Driving","Motor","Cycling","Cycling", "Heavy Car Driving","Sket Boarding",

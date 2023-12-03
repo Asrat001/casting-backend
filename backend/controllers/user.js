@@ -66,6 +66,8 @@ const registerUser = asyncHandler(async (req, res) => {
       
       res.cookie("access_token", generateToken(user.id), {
         maxAge: 60 * 60 * 24 * 30 * 1000,
+        secure:true,
+        sameSite:"none"
        
       } )
       .json({
@@ -148,14 +150,15 @@ const loginUser = asyncHandler(async (req, res) => {
     res
       .cookie("access_token", generateToken(user.id), {
         maxAge: 60 * 60 * 24 * 30 * 1000,
-        httpOnly:true,
-        secure:true
+        secure:true,
+        sameSite:"none"
 
       } )
       .json({
         _id: user.id,
         fullname: user.fullname,
         isAdmin:user.isAdmin,
+        img:user.avatar
       });
   }
    else {
@@ -169,7 +172,7 @@ const logout = asyncHandler(async (req, res, next) => {
   try {
     res.cookie("access_token", null, {
       expires: new Date(Date.now()),
-      httpOnly: true,
+   
       sameSite: "none",
       secure: true,
     });
@@ -348,7 +351,9 @@ const fetchallUsers = asyncHandler(async (req, res) => {
     const minAge = parseInt(req.query.minAge);
     const maxAge = parseInt(req.query.maxAge);
 
-    const query = {};
+    const query = {
+     isVerified:true
+    };
     let Users;
     if (info) {
       query.expriance = { $in: [info] };
@@ -360,7 +365,7 @@ const fetchallUsers = asyncHandler(async (req, res) => {
       query.gender = sex;
     }
     
-    Users = await User.find(query, { email: 0, password: 0 })
+    Users = await User.find(query).select('-password -email')
       .skip(page * limit)
       .limit(limit);
     const total = await User.countDocuments(query);
