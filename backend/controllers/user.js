@@ -64,7 +64,7 @@ const registerUser = asyncHandler(async (req, res) => {
       await transporter.sendMail(mailOptions);
   
       
-      res.cookie("access_token", generateToken(user.id), {
+      res.cookie("access_token", generateToken(user._id), {
         maxAge: 60 * 60 * 24 * 30 * 1000,
         secure:true,
         sameSite:"none"
@@ -132,6 +132,7 @@ const verifyOTP = async (req, res) => {
 // @access  Public
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
+ try {
   if (!email || !password) {
     res.status(400).json('Please add all fields');
     
@@ -139,32 +140,40 @@ const loginUser = asyncHandler(async (req, res) => {
   
   // Check for user email
   const user = await User.findOne({ email }).select("+password");
- const pass =await bcrypt.compare(password, user.password)
- console.log(pass)
+  console.log(user)
+ 
   if (!user) {
      res.status(404).json({error:'user doesnt exist'})
   }
 
-  if (user && (await bcrypt.compare(password, user.password))) {
-    console.log(user)
+  if (user && (await bcrypt.compare(password,user.password))) {
+  
+    
     res
-      .cookie("access_token", generateToken(user.id), {
+      .cookie("access_token", generateToken(user._id), {
         maxAge: 60 * 60 * 24 * 30 * 1000,
-        secure:true,
-        sameSite:"none"
+       // secure:true,
+        //sameSite:"none",
+        httpOnly: true
+
 
       } )
       .json({
-        _id: user.id,
+        _id: user._id,
         fullname: user.fullname,
         isAdmin:user.isAdmin,
         img:user.avatar
       });
+
+  }else{
+    res.status(400).json({message:"your password is incorect"})
   }
-   else {
-    res.status(400);
-    throw new Error("Invalid credentials");
-  }
+
+ } catch (error) {
+  res.status(400);
+  throw new Error("Invalid credentials");
+ }
+ 
 });
 
 // log out user
