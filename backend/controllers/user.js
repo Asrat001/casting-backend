@@ -398,8 +398,8 @@ const fetchallUsers = asyncHandler(async (req, res) => {
 const countallusers = asyncHandler(async (req, res) => {
 try {
   const allcast = await User.find().countDocuments()
-  const fm = await User.find({gender:'female'}).countDocuments()
-  const male = await User.find({gender:'male'}).countDocuments()
+  const fm = await User.find({gender:'FEMALE'}).countDocuments()
+  const male = await User.find({gender:'MALE'}).countDocuments()
   const monthlyRegisteredUsers = await User.aggregate([
     {
       $group: {
