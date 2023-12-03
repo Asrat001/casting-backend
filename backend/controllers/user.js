@@ -171,7 +171,7 @@ const logout = asyncHandler(async (req, res, next) => {
   try {
     res.cookie("access_token", null, {
       expires: new Date(Date.now()),
-      httpOnly: true,
+   
       sameSite: "none",
       secure: true,
     });
