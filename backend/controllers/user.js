@@ -155,7 +155,7 @@ const loginUser = asyncHandler(async (req, res) => {
         maxAge: 60 * 60 * 24 * 30 * 1000,
        secure:true,
        sameSite:"none",
-        httpOnly: true
+        
 
 
       } )
