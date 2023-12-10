@@ -74,6 +74,7 @@ const registerUser = asyncHandler(async (req, res) => {
         message:`you registed sucussfully , we have sent you otp to ${user.email}`,
         _id: user.id,
         fullname: user.fullname,
+        img:user.avatar
        
       });
     }
@@ -148,16 +149,12 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 
   if (user && (await bcrypt.compare(password,user.password))) {
-  
-    
-    
-    res.cookie("access_token", generateToken(user._id), {
+   
+  return  res.cookie("access_token", generateToken(user.id), {
         maxAge: 60 * 60 * 24 * 30 * 1000,
-       secure:true,
-       sameSite:"none",
-        
-
-
+       //secure:true,
+      // sameSite:"none",
+      httpOnly:true
       } )
       .json({
         _id: user._id,
@@ -165,9 +162,9 @@ const loginUser = asyncHandler(async (req, res) => {
         isAdmin:user.isAdmin,
         img:user.avatar
       });
-
+      
   }
-
+ 
  } catch (error) {
   res.status(400).json({error})
 
@@ -364,7 +361,7 @@ const fetchallUsers = asyncHandler(async (req, res) => {
     };
     let Users;
     if (info) {
-      query.expriance = { $in: [info] };
+      query.expriance = { $regex:info, $options: 'i' };
     }
     if (minAge && maxAge) {
       query.age = { $gte: minAge, $lte: maxAge };
@@ -423,7 +420,7 @@ try {
     monthlyRegisteredUsers:monthlyRegisteredUsers
    }
   
-  res.status(200).json(response);
+return  res.status(200).json(response);
   
 } catch (error) {
   res.status(400).json({message:'invalid access token'})

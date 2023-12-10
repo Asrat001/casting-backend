@@ -34,17 +34,14 @@ const isAdminMiddleware = async (req, res, next) => {
     }
   
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-  
-   const user = await User.findById(decoded.id);
+    const user = await User.findById(decoded.id);
   if(user.isAdmin==true)
   {
-  next()
+ return next()
   }
-  else {
-    res.status(403).json({ error: 'Unauthorized' }); // User is not an admin, return an error response
-  }
+
   } catch (error) {
-    res.status(403).json({ error: error,message:'yubibiu' });
+   return res.status(403).json({ error: error,message:'yubibiu' });
   }
  
 };

@@ -27,6 +27,7 @@ const userSchema = new Schema(
             type:String,
         },
         links:{type:String},
+        works:{type:String},
         skintone:{type:String},
         language:{type:String},
         phone:{type:String},
