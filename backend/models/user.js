@@ -31,6 +31,7 @@ const userSchema = new Schema(
         skintone:{type:String},
         language:{type:String},
         phone:{type:String},
+       Testimonials:{type:String},
         info:{
           region:{
             type:String,
